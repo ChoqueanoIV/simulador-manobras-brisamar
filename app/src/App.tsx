@@ -1,4 +1,5 @@
 import './App.css';
+import { IntervalControls } from './components/controls/IntervalControls';
 import { YardCanvas } from './yard/components/YardCanvas';
 
 function App() {
@@ -24,11 +25,8 @@ function App() {
             <h2>Mapa do pátio</h2>
             <p>Use a roda do mouse para zoom e arraste uma área vazia para navegar.</p>
           </div>
-          <div className="legend">
-            <span><i className="legend-dot amv" /> AMV</span>
-            <span><i className="legend-dot marker" /> Marco</span>
-            <span><i className="legend-stop">P</i> Placa PARE</span>
-          </div>
+
+          <IntervalControls />
         </div>
 
         <YardCanvas />

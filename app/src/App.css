@@ -102,7 +102,7 @@ h1 {
 
 .workspace-header {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
   padding: 4px 4px 16px;
@@ -118,47 +118,53 @@ h1 {
   font-size: 0.9rem;
 }
 
-.legend {
+.interval-panel {
   display: flex;
   align-items: center;
-  gap: 18px;
-  color: #5c687b;
-  font-size: 0.82rem;
+  gap: 14px;
+  padding: 9px 10px 9px 13px;
+  border: 1px solid #d6dee9;
+  border-radius: 12px;
+  background: #f8fafc;
 }
 
-.legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.interval-panel.is-granted {
+  border-color: #9dcaaa;
+  background: #f2fbf5;
 }
 
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
+.interval-panel > div {
+  min-width: 130px;
 }
 
-.legend-dot.amv {
-  background: #d5222a;
+.interval-panel strong {
+  display: block;
+  margin-top: 1px;
+  color: #26364b;
+  font-size: 0.9rem;
 }
 
-.legend-dot.marker {
-  border: 2px solid #111827;
-  background: #ffffff;
-}
-
-.legend-stop {
-  width: 18px;
-  height: 18px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #c91f26;
-  color: #ffffff;
-  font-size: 0.66rem;
-  font-style: normal;
+.interval-label {
+  color: #718096;
+  font-size: 0.7rem;
   font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.interval-panel button {
+  border: 1px solid #b8c7d9;
+  border-radius: 9px;
+  padding: 8px 11px;
+  background: #ffffff;
+  color: #26364b;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.interval-panel button:hover {
+  background: #eef4fa;
 }
 
 .yard-shell {
@@ -214,20 +220,16 @@ h1 {
 
 .track {
   fill: none;
-  stroke: #161d2a;
+  stroke: #111111;
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.track.secondary {
-  stroke-width: 3.2;
-}
-
 .track.technical {
   stroke: #64748b;
-  stroke-width: 3;
-  stroke-dasharray: 8 7;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
 }
 
 .line-label {
@@ -243,16 +245,24 @@ h1 {
   letter-spacing: 0.16em;
 }
 
-.capacity-label {
-  fill: #7c8799;
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .marker-symbol {
   fill: #ffffff;
   stroke: #111827;
   stroke-width: 2;
+}
+
+.stop-board-diamond {
+  fill: #ff9c61;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+}
+
+.switch-view {
+  cursor: pointer;
+}
+
+.switch-view.is-locked {
+  cursor: not-allowed;
 }
 
 .amv-point {
@@ -263,54 +273,91 @@ h1 {
 
 .amv-hit {
   fill: transparent;
-  cursor: pointer;
+  pointer-events: all;
+}
+
+.amv-position-ring {
+  fill: none;
+  stroke-width: 3;
+}
+
+.switch-view.position-a .amv-position-ring {
+  stroke: #326aa8;
+}
+
+.switch-view.position-b .amv-position-ring {
+  stroke: #de8b1e;
+}
+
+.switch-view.is-locked .amv-position-ring {
+  stroke: #6b7280;
+  stroke-dasharray: 3 2;
 }
 
 .amv-label-bg {
-  fill: rgba(255, 255, 255, 0.94);
+  fill: rgba(255, 255, 255, 0.96);
   stroke: #cbd5e1;
   stroke-width: 1;
 }
 
 .amv-label {
   fill: #27364b;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.stop-board {
-  fill: #c91f26;
-  stroke: #ffffff;
-  stroke-width: 2;
-}
-
-.stop-board-text {
-  fill: #ffffff;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 850;
+  pointer-events: none;
+}
+
+.switch-lock-body {
+  fill: #475569;
+}
+
+.switch-lock-shackle {
+  fill: none;
+  stroke: #475569;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 .canvas-caption {
   fill: #8793a5;
   font-size: 12px;
 }
-/* Ajustes específicos da geometria corrigida do Pátio Brisamar */
-.stop-board-diamond {
-  fill: #ff9c61;
-  stroke: #ffffff;
-  stroke-width: 1.5;
+/* Destaque visual da rota realmente alinhada em cada AMV */
+.active-switch-routes {
+  pointer-events: none;
 }
 
-.track {
+.active-switch-route {
   fill: none;
-  stroke: #111111;
-  stroke-width: 4;
+  stroke-width: 8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  opacity: 0.88;
+  pointer-events: none;
 }
 
-.track.technical {
-  stroke: #64748b;
-  stroke-width: 2.5;
-  stroke-dasharray: 7 6;
+.active-switch-route.position-a {
+  stroke: #1373d1;
+}
+
+.active-switch-route.position-b {
+  stroke: #d78316;
+}
+
+.switch-view.is-fixed {
+  cursor: default;
+}
+
+.switch-view.is-fixed .amv-position-ring {
+  stroke: #326aa8;
+  stroke-dasharray: none;
+}
+.active-switch-route.amv12-route {
+  stroke: #d78316;
+}
+/* Padronização visual das rotas ativas dos AMVs */
+.active-switch-route.position-a,
+.active-switch-route.position-b,
+.active-switch-route.amv12-route {
+  stroke: #d78316;
 }
