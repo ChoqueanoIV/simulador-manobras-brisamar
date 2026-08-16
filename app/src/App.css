@@ -361,3 +361,262 @@ h1 {
 .active-switch-route.amv12-route {
   stroke: #d78316;
 }
+
+.preparation-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.preparation-layout .yard-shell {
+  min-width: 0;
+}
+
+.preparation-panel {
+  min-height: 610px;
+  padding: 16px;
+  border: 1px solid #d7e0eb;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #26364b;
+  overflow: auto;
+}
+
+.preparation-panel h3,
+.preparation-panel h4 {
+  margin: 0;
+}
+
+.preparation-panel > p {
+  margin-top: 8px;
+  color: #68778b;
+  line-height: 1.45;
+}
+
+.preparation-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.preparation-kicker {
+  display: block;
+  margin-bottom: 3px;
+  color: #748299;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.capacity-badge {
+  flex: none;
+  padding: 6px 8px;
+  border: 1px solid #cbd7e5;
+  border-radius: 9px;
+  background: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.capacity-badge.is-warning {
+  border-color: #e1a64c;
+  background: #fff5df;
+  color: #8a5411;
+}
+
+.preparation-form {
+  display: grid;
+  gap: 9px;
+  padding: 13px 0;
+  border-top: 1px solid #dde5ee;
+}
+
+.preparation-form label {
+  display: grid;
+  gap: 4px;
+  color: #53647a;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.preparation-form input,
+.preparation-form select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #c7d3e1;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #26364b;
+}
+
+.preparation-form input[type='color'] {
+  padding: 3px;
+}
+
+.preparation-form button,
+.preparation-reset-button {
+  min-height: 36px;
+  border: 1px solid #b7c7d8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #26364b;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.preparation-form button:hover {
+  background: #eef4f9;
+}
+
+.preparation-reset-button {
+  width: 100%;
+  border-color: #e0b3b3;
+  color: #8c3232;
+}
+
+.preparation-message {
+  margin: 4px 0 12px;
+  color: #48647f;
+  font-size: 0.75rem;
+}
+
+.preparation-stock-summary {
+  padding: 13px 0;
+  border-top: 1px solid #dde5ee;
+}
+
+.preparation-stock-summary ol {
+  margin: 8px 0 0;
+  padding-left: 22px;
+  font-size: 0.75rem;
+}
+
+.preparation-stock-summary p {
+  margin: 7px 0 0;
+  color: #748299;
+  font-size: 0.75rem;
+}
+
+.yard-section-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 22;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.yard-section-hit:hover,
+.yard-section-hit.is-selected {
+  stroke: rgba(215, 131, 22, 0.2);
+}
+
+.yard-section-hit.is-selected {
+  stroke: rgba(215, 131, 22, 0.32);
+}
+
+.yard-rolling-stock {
+  pointer-events: none;
+}
+
+.rolling-stock-locomotive {
+  fill: #27364b;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.rolling-stock-locomotive-number {
+  fill: #ffffff;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.rolling-stock-orientation {
+  fill: none;
+  stroke: #d78316;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rolling-stock-wagons {
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.rolling-stock-wagon-label {
+  fill: #172033;
+  font-size: 9px;
+  font-weight: 850;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.76);
+  stroke-width: 2px;
+}
+
+@media (max-width: 1350px) {
+  .preparation-layout {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}
+
+/* Locomotiva — visual top-down simplificado */
+.locomotive-view {
+  pointer-events: none;
+}
+
+.locomotive-body {
+  fill: #425466;
+  stroke: #1f2937;
+  stroke-width: 1;
+}
+
+.locomotive-cab {
+  fill: #2f4052;
+  stroke: #1f2937;
+  stroke-width: 0.9;
+}
+
+.locomotive-window {
+  fill: #c7e7f5;
+  stroke: #ffffff;
+  stroke-width: 0.6;
+}
+
+.locomotive-nose {
+  fill: #d78316;
+  stroke: #9a5b0d;
+  stroke-width: 0.8;
+}
+
+.locomotive-headlight {
+  fill: #fff1a6;
+  stroke: #7a6200;
+  stroke-width: 0.4;
+}
+
+.locomotive-bogie {
+  fill: #111827;
+}
+
+.locomotive-coupler {
+  stroke: #111827;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.locomotive-number-plate {
+  fill: rgba(255, 255, 255, 0.98);
+  stroke: #b9c6d4;
+  stroke-width: 0.8;
+}
+
+.locomotive-number-text {
+  fill: #172033;
+  font-size: 8px;
+  font-weight: 850;
+}

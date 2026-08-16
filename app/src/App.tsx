@@ -1,8 +1,14 @@
+import { useState } from 'react';
 import './App.css';
 import { IntervalControls } from './components/controls/IntervalControls';
+import { PreparationPanel } from './preparation/components/PreparationPanel';
+import type { YardSectionId } from './preparation/types/preparation';
 import { YardCanvas } from './yard/components/YardCanvas';
 
 function App() {
+  const [selectedSectionId, setSelectedSectionId] =
+    useState<YardSectionId | null>(null);
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -23,13 +29,23 @@ function App() {
         <div className="workspace-header">
           <div>
             <h2>Mapa do pátio</h2>
-            <p>Use a roda do mouse para zoom e arraste uma área vazia para navegar.</p>
+            <p>
+              Use a roda do mouse para zoom, arraste uma área vazia para navegar
+              e clique em um trecho para preenchê-lo.
+            </p>
           </div>
 
           <IntervalControls />
         </div>
 
-        <YardCanvas />
+        <div className="preparation-layout">
+          <YardCanvas
+            selectedSectionId={selectedSectionId}
+            onSelectSection={setSelectedSectionId}
+          />
+
+          <PreparationPanel selectedSectionId={selectedSectionId} />
+        </div>
       </section>
     </main>
   );

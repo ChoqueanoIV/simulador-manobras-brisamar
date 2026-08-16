@@ -1,10 +1,24 @@
-import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import {
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+  type WheelEvent,
+} from 'react';
 import { useSimulationStore } from '../../state/simulationStore';
 import type { SwitchId, SwitchPosition } from '../../types/switch';
+import type { YardSectionId } from '../../preparation/types/preparation';
+import { yardSectionGeometry } from '../data/yardSectionGeometry';
+import { YardRollingStock } from './YardRollingStock';
 import { SwitchView } from './SwitchView';
 
 type Point = { x: number; y: number };
 type ViewState = { scale: number; x: number; y: number };
+
+type YardCanvasProps = {
+  selectedSectionId: YardSectionId | null;
+  onSelectSection: (sectionId: YardSectionId) => void;
+};
 
 const MIN_SCALE = 0.65;
 const MAX_SCALE = 3;
@@ -101,13 +115,6 @@ const switchRoutePaths: Record<SwitchId, Record<SwitchPosition, string>> = {
     A: 'M868 375 H928',
     B: 'M928 375 H898 L873 395',
   },
-
-  // O AMV-12 é especial:
-  // a alça de curva é sempre parte da rota ativa.
-  // A outra ponta alterna entre L22 e L24 superior.
-  //
-  // A = alça de curva + L22
-  // B = alça de curva + L24 superior
   'AMV-12': {
     A: 'M1540 352 C1533 383 1522 412 1510 436 M1510 436 H1470',
     B: 'M1540 352 C1533 383 1522 412 1510 436 M1510 436 L1486 410',
@@ -118,7 +125,10 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-export function YardCanvas() {
+export function YardCanvas({
+  selectedSectionId,
+  onSelectSection,
+}: YardCanvasProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef<Point | null>(null);
   const originStart = useRef<Point | null>(null);
@@ -126,6 +136,8 @@ export function YardCanvas() {
   const [view, setView] = useState<ViewState>({ scale: 0.88, x: 10, y: 8 });
 
   const switches = useSimulationStore((state) => state.switches);
+  const yardSections = useSimulationStore((state) => state.yardSections);
+  const mode = useSimulationStore((state) => state.mode);
 
   const transform = useMemo(
     () => `translate(${view.x} ${view.y}) scale(${view.scale})`,
@@ -211,9 +223,15 @@ export function YardCanvas() {
       onPointerCancel={stopPan}
     >
       <div className="yard-toolbar">
-        <button type="button" onClick={zoomIn} aria-label="Aumentar zoom">+</button>
-        <button type="button" onClick={zoomOut} aria-label="Diminuir zoom">−</button>
-        <button type="button" onClick={resetView} aria-label="Restaurar visualização">↺</button>
+        <button type="button" onClick={zoomIn} aria-label="Aumentar zoom">
+          +
+        </button>
+        <button type="button" onClick={zoomOut} aria-label="Diminuir zoom">
+          −
+        </button>
+        <button type="button" onClick={resetView} aria-label="Restaurar visualização">
+          ↺
+        </button>
       </div>
 
       <svg className="yard-svg" viewBox="0 0 1640 700" role="img" aria-label="Pátio Brisamar">
@@ -243,6 +261,39 @@ export function YardCanvas() {
           <path className="track technical" d="M560 610 H620" />
           <path className="track technical" d="M628 552 H688" />
           <path className="track technical" d="M697 495 H757" />
+
+          {mode === 'preparation'
+            ? yardSectionGeometry.map((section) => (
+                <path
+                  key={section.id}
+                  className={`yard-section-hit${
+                    selectedSectionId === section.id ? ' is-selected' : ''
+                  }`}
+                  d={section.path}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelectSection(section.id);
+                  }}
+                >
+                  <title>Clique para preparar {section.id}</title>
+                </path>
+              ))
+            : null}
+
+          {yardSectionGeometry.map((geometry) => {
+            const section = yardSections.find(
+              (item) => item.sectionId === geometry.id,
+            );
+
+            return section ? (
+              <YardRollingStock
+                key={geometry.id}
+                section={section}
+                geometry={geometry}
+              />
+            ) : null;
+          })}
 
           <g className="active-switch-routes">
             {switches.map((switchState) => (
@@ -288,8 +339,8 @@ export function YardCanvas() {
             />
           ))}
 
-          <text x="880" y="675" className="canvas-caption">
-            AMV-12: alça sempre ativa + seleção exclusiva L22 ou L24 superior.
+          <text x="800" y="675" className="canvas-caption">
+            Modo preparação — clique em um trecho para cadastrar o material inicial.
           </text>
         </g>
       </svg>

@@ -3,6 +3,7 @@ import type { YardSectionState } from '../types/preparation';
 import {
   appendLocomotive,
   appendWagonBlock,
+  getSectionOccupiedUnits,
   getSectionWagonQuantity,
   isCapacityExceeded,
   resetSection,
@@ -95,7 +96,7 @@ describe('preparation rules', () => {
     expect(resetSection(populated).rollingStock).toEqual([]);
   });
 
-  it('soma apenas vagões para referência de capacidade', () => {
+  it('soma apenas vagões quando solicitado', () => {
     const withWagons = appendWagonBlock(emptySection, {
       id: 'wb-1',
       kind: 'wagon-block',
@@ -114,15 +115,54 @@ describe('preparation rules', () => {
     expect(getSectionWagonQuantity(withLocomotive)).toBe(50);
   });
 
-  it('alerta capacidade excedida sem invalidar o estado', () => {
-    const section = appendWagonBlock(emptySection, {
+  it('conta locomotiva como uma unidade de ocupação', () => {
+    const withLocomotive = appendLocomotive(emptySection, {
+      id: 'loco-1',
+      kind: 'locomotive',
+      number: '3820',
+      orientation: 'front-barra',
+    });
+
+    expect(getSectionOccupiedUnits(withLocomotive)).toBe(1);
+  });
+
+  it('soma vagões e locomotivas na ocupação do trecho', () => {
+    const withWagons = appendWagonBlock(emptySection, {
       id: 'wb-1',
       kind: 'wagon-block',
-      quantity: 59,
+      quantity: 54,
       label: 'FVR',
       color: '#999999',
     });
 
-    expect(isCapacityExceeded(section, 55)).toBe(true);
+    const withLocomotive = appendLocomotive(withWagons, {
+      id: 'loco-1',
+      kind: 'locomotive',
+      number: '3820',
+      orientation: 'front-barra',
+    });
+
+    expect(getSectionOccupiedUnits(withLocomotive)).toBe(55);
+    expect(isCapacityExceeded(withLocomotive, 55)).toBe(false);
+  });
+
+  it('alerta capacidade excedida considerando locomotivas', () => {
+    const withWagons = appendWagonBlock(emptySection, {
+      id: 'wb-1',
+      kind: 'wagon-block',
+      quantity: 55,
+      label: 'FVR',
+      color: '#999999',
+    });
+
+    const withLocomotive = appendLocomotive(withWagons, {
+      id: 'loco-1',
+      kind: 'locomotive',
+      number: '3820',
+      orientation: 'front-barra',
+    });
+
+    expect(getSectionOccupiedUnits(withLocomotive)).toBe(56);
+    expect(isCapacityExceeded(withLocomotive, 55)).toBe(true);
   });
 });
