@@ -28,4 +28,13 @@ export type SwitchDefinition = {
   positionB: string;
   intervalRule: 'none' | 'full-lock' | 'restricted-position';
   allowedWithoutInterval?: SwitchPosition;
+  /**
+   * Nó da ponta única do AMV (lado de onde a composição chega
+   * independentemente da posição da chave).
+   */
+  nodeCommon: string;
+  /** Nó do ramo conectado na posição A. */
+  nodeA: string;
+  /** Nó do ramo conectado na posição B. */
+  nodeB: string;
 };

@@ -1,107 +1,113 @@
-# PRÓXIMA ETAPA — ÉPICO 4: MODELO DE COMPOSIÇÃO, ENGATE E CORTE
+# PRÓXIMA ETAPA — ÉPICO 5 (PREPARAÇÃO): TOPOLOGIA DO GRAFO
 
 ## Contexto
 
-A Issue #1 (Modo de Preparação) foi concluída.
+O Épico 4 (domínio de composição, engate e corte) foi concluído.
 
-O pátio:
-- inicia vazio;
-- suporta cadastro de locomotivas e blocos de vagões por trecho;
-- exibe material visual proporcional no SVG;
-- possui anotação opcional da estação;
-- possui botão "Iniciar Simulação" com confirmação;
-- bloqueia edições após iniciar;
-- exibe modo atual no header;
-- AMVs, intervalo e geometria já funcionam.
+Para que o motor de movimentação (Épico 5 completo) funcione, é necessário antes
+modelar o **pátio como grafo computável** — nós de conexão e segmentos de trilho.
 
-A próxima etapa é implementar as **entidades de composição** que permitirão, futuramente, o motor de movimento, engate e corte.
+Sem esse grafo, o motor não consegue:
+- determinar por qual trilho a composição deve continuar;
+- detectar quando um AMV está contra;
+- seguir a topologia ao atravessar de um segmento para outro.
 
-**Esta etapa NÃO implementa movimentação por arraste.** O foco é a modelagem de domínio.
+**Esta etapa entrega apenas os dados estáticos da topologia.** Nenhum movimento ainda.
+
+---
+
+## Fonte de verdade
+
+```text
+docs/MAPA_BRISAMAR_V1_CONSOLIDADO.md
+docs/MODELO_DOMINIO.md  (seções 2 e 3)
+app/src/yard/data/brisamarSwitches.ts  (AMVs já mapeados)
+app/src/yard/components/YardCanvas.tsx (coordenadas SVG de referência)
+```
 
 ---
 
 ## Escopo
 
-### A — Representação individual dos veículos no domínio
+### A — Tipo TrackNode
 
-O `WagonBlock` atual no store agrupa vagões apenas visualmente.
-Para suportar corte em qualquer posição, o domínio precisa de `WagonUnit` — um vagão individual.
-
-Implementar:
-- tipo `WagonUnit` com `id`, `label`, `color`, `sourceBlockId`;
-- ao adicionar um bloco de N vagões, criar N `WagonUnit`s internamente;
-- o `WagonBlock` visual continua existindo — é reconstruído a partir de unidades consecutivas com mesmo `sourceBlockId`;
-- a ordem física das unidades é preservada no array.
-
-**Referência:** `docs/MODELO_DOMINIO.md` seções 11 e 12.
-
-Antes de criar, procure se `WagonUnit` já existe em algum arquivo.
-
-Valide este bloco antes de avançar.
-
-### B — Tipo Composition
-
-Representar uma composição: conjunto físico engatado de material rodante.
+Nó de conexão na topologia. Representa um ponto do pátio onde:
+- dois segmentos se encontram;
+- ou um AMV conecta/desconecta rotas.
 
 ```ts
-type Composition = {
+type TrackNode = {
   id: string;
-  unitIds: string[]; // IDs de WagonUnit e Locomotive em ordem física
+};
+```
+
+### B — Tipo TrackSegment
+
+Trecho navegável de trilho entre dois nós.
+
+```ts
+type TrackSegment = {
+  id: string;
+  line: string;           // 'L22', 'L24', etc.
+  startNodeId: string;
+  endNodeId: string;
+  protectedByInterval: boolean;  // true para trechos em L16/L18/L20
 };
 ```
 
 Regras:
-- pode conter zero ou mais locomotivas;
-- pode conter zero ou mais vagões;
-- uma locomotiva sozinha é uma composição válida;
-- um bloco de vagões sozinho é uma composição válida (sem locomotiva, não pode mover);
-- a ordem do array representa a sequência física.
+- cada segmento conecta exatamente dois nós;
+- uma mesma linha pode ter vários segmentos (ex.: L22_SUPERIOR, L22_TRAVESSAO, L22_INFERIOR);
+- segmentos de L16, L18 e L20 são `protectedByInterval: true`;
+- segmentos técnicos (continuação reta além da área de manobra) são modelados mas marcados.
 
-Não implementar movimentação agora. Apenas o tipo e as funções de domínio.
+### C — Conexões dos AMVs
 
-Valide este bloco antes de avançar.
+Cada AMV no grafo conecta três nós (ponta comum + dois ramos).
 
-### C — Engate (domínio puro)
+Acrescentar ao `SwitchDefinition` existente:
 
-Implementar funções puras:
-
-```text
-couple(compositionA, compositionB, side): Composition
+```ts
+type SwitchDefinition = {
+  // campos já existentes ...
+  nodeCommon: string;   // nó da ponta única do AMV
+  nodeA: string;        // nó do ramo na posição A
+  nodeB: string;        // nó do ramo na posição B
+};
 ```
 
-Regras:
-- une duas composições;
-- preserva a ordem física;
-- o lado do engate determina qual extremidade de A se une a qual extremidade de B;
-- não gera engate automático;
-- nenhuma UI nesta etapa.
+Com essa informação, dado o estado atual do AMV (posição A ou B), o motor
+sabe qual par de nós está conectado.
 
-Testes unitários obrigatórios para esta função.
+### D — Arquivo de topologia
 
-Valide este bloco antes de avançar.
+Criar `app/src/yard/data/brisamarTopology.ts` com:
+- todos os nós (`TrackNode[]`);
+- todos os segmentos (`TrackSegment[]`);
+- conexões dos AMVs atualizadas em `brisamarSwitches.ts`.
 
-### D — Corte (domínio puro)
+Derivar **exclusivamente** do `MAPA_BRISAMAR_V1_CONSOLIDADO.md`
+e das coordenadas SVG já validadas em `YardCanvas.tsx`.
 
-Implementar funções puras:
+**Não inventar topologia.** Se um trecho estiver ambíguo no mapa, parar e perguntar.
 
-```text
-splitAt(composition, index): [Composition, Composition]
+### E — Funções de consulta (grafo)
+
+Criar `app/src/yard/data/brisamarTopologyGraph.ts` com funções puras:
+
+```ts
+// Retorna os segmentos conectados a um nó
+function getSegmentsAtNode(nodeId: string, segments: TrackSegment[]): TrackSegment[]
+
+// Dado o AMV no estado atual, retorna o par de nós conectados
+function getActiveSwitchConnection(
+  switchDef: SwitchDefinition,
+  position: SwitchPosition,
+): [string, string]
+
+// Dado um segmento e o nó de chegada, retorna o nó de saída
+function getExitNode(segment: TrackSegment, entryNodeId: string): string | null
 ```
-
-Regras:
-- divide a composição em dois no índice indicado;
-- preserva a ordem física de ambas as partes;
-- corte dentro de um bloco visual é permitido (separa unidades individuais);
-- resultado: dois objetos `Composition` independentes.
-
-Exemplo de corte dentro de bloco:
-```text
-[15 FVR] → splitAt(12) → [12 FVR] [3 FVR]
-```
-
-Testes unitários obrigatórios.
-
-Valide este bloco antes de avançar.
 
 ---
 
@@ -109,20 +115,16 @@ Valide este bloco antes de avançar.
 
 NÃO implementar agora:
 - movimentação por arraste;
-- detecção de contato;
-- colisão;
-- chave contra;
-- ocupação de AMV;
-- intervalo nas linhas L16/L18/L20;
-- UI de engate/corte (botões, clique no pátio);
-- persistência;
-- backend.
+- detecção de colisão;
+- chave contra (lógica de bloqueio);
+- ocupação de AMV por material rodante;
+- atualização do estado de posição de composição no store;
+- placas PARE funcionais;
+- intervalo nas linhas L16/L18/L20.
 
 ---
 
 ## Testes obrigatórios
-
-Após cada bloco e ao final:
 
 ```powershell
 npm run lint
@@ -130,19 +132,16 @@ npm run test
 npm run build
 ```
 
-Testes de domínio para:
-- criar N `WagonUnit`s a partir de um bloco;
-- `couple` preserva ordem;
-- `splitAt` divide corretamente;
-- `splitAt` dentro de bloco visual;
-- composição sem locomotiva é válida.
+Cobrir:
+- `getExitNode` para ambas as direções de um segmento;
+- `getActiveSwitchConnection` para posição A e B;
+- `getSegmentsAtNode` para nó com um, dois e três segmentos.
 
 ---
 
 ## Referências
 
-- `docs/MODELO_DOMINIO.md` — seções 9 a 15
-- `docs/ESCOPO_MVP.md` — seções 7 e 8
-- `docs/BACKLOG_MVP.md` — Épico 4
-- `app/src/rolling-stock/types/rollingStock.ts` — tipos atuais
-- `app/src/state/simulationStore.ts` — store atual
+- `docs/MAPA_BRISAMAR_V1_CONSOLIDADO.md`
+- `docs/MODELO_DOMINIO.md` seções 2 e 3
+- `app/src/types/switch.ts`
+- `app/src/yard/data/brisamarSwitches.ts`
