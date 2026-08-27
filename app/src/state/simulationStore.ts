@@ -4,8 +4,14 @@ import {
   normalizeSwitchesOnIntervalReturn,
   toggleSwitch,
 } from '../simulation/domain/switches/switchRules';
+import { applySwitchOccupancyToStates } from '../simulation/domain/switch-occupancy/applySwitchOccupancy';
+import type { PositionedComposition } from '../simulation/domain/collision/collisionRules';
 import type { IntervalState, SwitchId, SwitchState } from '../types/switch';
-import { initialSwitchStates } from '../yard/data/brisamarSwitches';
+import {
+  brisamarSwitchDefinitions,
+  initialSwitchStates,
+} from '../yard/data/brisamarSwitches';
+import { brisamarSegments } from '../yard/data/brisamarTopology';
 import type {
   LocomotiveOrientation,
   RollingStock,
@@ -40,10 +46,18 @@ type SimulationStore = {
   yardSections: YardSectionState[];
   stationNotes: string;
 
+  /**
+   * Posições lógicas das composições no grafo.
+   *
+   * Nesta etapa o store apenas recebe essas posições e deriva a ocupação dos
+   * AMVs. A criação/movimentação dessas posições será integrada em task
+   * posterior.
+   */
+  positionedCompositions: PositionedComposition[];
+
   requestInterval: () => void;
   returnInterval: () => boolean;
   operateSwitch: (switchId: SwitchId) => void;
-
   setStationNotes: (notes: string) => void;
   addLocomotive: (
     sectionId: YardSectionId,
@@ -55,6 +69,14 @@ type SimulationStore = {
   ) => void;
   resetYardSection: (sectionId: YardSectionId) => void;
   startSimulation: () => void;
+
+  /**
+   * Atualiza as posições lógicas e recalcula `SwitchState.occupied`
+   * imediatamente.
+   */
+  setPositionedCompositions: (
+    positionedCompositions: PositionedComposition[],
+  ) => void;
 };
 
 let rollingStockSequence = 0;
@@ -80,6 +102,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
   switches: initialSwitchStates,
   yardSections: initialYardSections,
   stationNotes: '',
+  positionedCompositions: [],
 
   requestInterval: () => {
     set({ interval: 'granted' });
@@ -189,5 +212,19 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     }
 
     set({ mode: 'simulation' });
+  },
+
+  setPositionedCompositions: (positionedCompositions) => {
+    const current = get();
+
+    set({
+      positionedCompositions,
+      switches: applySwitchOccupancyToStates(
+        brisamarSwitchDefinitions,
+        current.switches,
+        brisamarSegments,
+        positionedCompositions,
+      ),
+    });
   },
 }));
