@@ -1,112 +1,69 @@
-# PRÓXIMA ETAPA — ÉPICO 5 (PREPARAÇÃO): TOPOLOGIA DO GRAFO
+# PRÓXIMA ETAPA — MOTOR DE NAVEGAÇÃO NO GRAFO
 
 ## Contexto
 
-O Épico 4 (domínio de composição, engate e corte) foi concluído.
+A topologia do grafo do Pátio Brisamar está concluída:
+- nós e segmentos definidos em `brisamarTopology.ts`;
+- conexões dos AMVs mapeadas em `brisamarSwitches.ts`;
+- funções de consulta em `brisamarTopologyGraph.ts`.
 
-Para que o motor de movimentação (Épico 5 completo) funcione, é necessário antes
-modelar o **pátio como grafo computável** — nós de conexão e segmentos de trilho.
+A próxima etapa é o **motor de navegação**: dado um segmento atual + nó de
+chegada + estado dos AMVs + estado do intervalo, determinar se a composição
+pode avançar e para qual segmento ela irá.
 
-Sem esse grafo, o motor não consegue:
-- determinar por qual trilho a composição deve continuar;
-- detectar quando um AMV está contra;
-- seguir a topologia ao atravessar de um segmento para outro.
-
-**Esta etapa entrega apenas os dados estáticos da topologia.** Nenhum movimento ainda.
-
----
-
-## Fonte de verdade
-
-```text
-docs/MAPA_BRISAMAR_V1_CONSOLIDADO.md
-docs/MODELO_DOMINIO.md  (seções 2 e 3)
-app/src/yard/data/brisamarSwitches.ts  (AMVs já mapeados)
-app/src/yard/components/YardCanvas.tsx (coordenadas SVG de referência)
-```
+**Esta etapa não implementa movimentação por arraste.** É domínio puro.
 
 ---
 
 ## Escopo
 
-### A — Tipo TrackNode
+### A — resolveNextSegment
 
-Nó de conexão na topologia. Representa um ponto do pátio onde:
-- dois segmentos se encontram;
-- ou um AMV conecta/desconecta rotas.
+Dada a posição atual de uma composição (segmento + nó de saída),
+retornar o próximo segmento ou o motivo pelo qual não pode avançar.
 
 ```ts
-type TrackNode = {
-  id: string;
-};
+type NavigationResult =
+  | { ok: true; segment: TrackSegment }
+  | { ok: false; reason: NavigationBlockReason };
+
+type NavigationBlockReason =
+  | 'terminal'           // extremidade de linha, não há próximo segmento
+  | 'switch-against'     // chave contra
+  | 'interval-required'  // segmento protegido sem intervalo concedido
+  | 'stop-board'         // placa PARE (reservado — sem dados ainda)
+
+function resolveNextSegment(
+  currentSegmentId: string,
+  exitNodeId: string,
+  segments: TrackSegment[],
+  switchDefs: Record<SwitchId, SwitchDefinition>,
+  switchStates: SwitchState[],
+  interval: IntervalState,
+): NavigationResult
 ```
 
-### B — Tipo TrackSegment
+### B — isSwitchAgainst
 
-Trecho navegável de trilho entre dois nós.
+Determinar se um AMV está contra para uma composição que chega por um nó.
 
-```ts
-type TrackSegment = {
-  id: string;
-  line: string;           // 'L22', 'L24', etc.
-  startNodeId: string;
-  endNodeId: string;
-  protectedByInterval: boolean;  // true para trechos em L16/L18/L20
-};
-```
-
-Regras:
-- cada segmento conecta exatamente dois nós;
-- uma mesma linha pode ter vários segmentos (ex.: L22_SUPERIOR, L22_TRAVESSAO, L22_INFERIOR);
-- segmentos de L16, L18 e L20 são `protectedByInterval: true`;
-- segmentos técnicos (continuação reta além da área de manobra) são modelados mas marcados.
-
-### C — Conexões dos AMVs
-
-Cada AMV no grafo conecta três nós (ponta comum + dois ramos).
-
-Acrescentar ao `SwitchDefinition` existente:
+Regra do grafo:
+- composição chega por `entryNodeId`;
+- o AMV tem `nodeCommon`, `nodeA`, `nodeB`;
+- se `entryNodeId === nodeCommon` → composição vem da ponta única → **não é contra**
+  (ela sairá pelo ramo ativo: nodeA ou nodeB conforme a posição);
+- se `entryNodeId === nodeA` e posição é A → **não é contra** (composição vem pelo ramo ativo, sai pelo common);
+- se `entryNodeId === nodeA` e posição é B → **chave contra** (ramo A não está conectado);
+- se `entryNodeId === nodeB` e posição é B → **não é contra**;
+- se `entryNodeId === nodeB` e posição é A → **chave contra**;
+- se `entryNodeId` não pertence ao AMV → não é um AMV relevante para esta travessia.
 
 ```ts
-type SwitchDefinition = {
-  // campos já existentes ...
-  nodeCommon: string;   // nó da ponta única do AMV
-  nodeA: string;        // nó do ramo na posição A
-  nodeB: string;        // nó do ramo na posição B
-};
-```
-
-Com essa informação, dado o estado atual do AMV (posição A ou B), o motor
-sabe qual par de nós está conectado.
-
-### D — Arquivo de topologia
-
-Criar `app/src/yard/data/brisamarTopology.ts` com:
-- todos os nós (`TrackNode[]`);
-- todos os segmentos (`TrackSegment[]`);
-- conexões dos AMVs atualizadas em `brisamarSwitches.ts`.
-
-Derivar **exclusivamente** do `MAPA_BRISAMAR_V1_CONSOLIDADO.md`
-e das coordenadas SVG já validadas em `YardCanvas.tsx`.
-
-**Não inventar topologia.** Se um trecho estiver ambíguo no mapa, parar e perguntar.
-
-### E — Funções de consulta (grafo)
-
-Criar `app/src/yard/data/brisamarTopologyGraph.ts` com funções puras:
-
-```ts
-// Retorna os segmentos conectados a um nó
-function getSegmentsAtNode(nodeId: string, segments: TrackSegment[]): TrackSegment[]
-
-// Dado o AMV no estado atual, retorna o par de nós conectados
-function getActiveSwitchConnection(
+function isSwitchAgainst(
   switchDef: SwitchDefinition,
   position: SwitchPosition,
-): [string, string]
-
-// Dado um segmento e o nó de chegada, retorna o nó de saída
-function getExitNode(segment: TrackSegment, entryNodeId: string): string | null
+  entryNodeId: string,
+): boolean
 ```
 
 ---
@@ -116,11 +73,9 @@ function getExitNode(segment: TrackSegment, entryNodeId: string): string | null
 NÃO implementar agora:
 - movimentação por arraste;
 - detecção de colisão;
-- chave contra (lógica de bloqueio);
 - ocupação de AMV por material rodante;
-- atualização do estado de posição de composição no store;
-- placas PARE funcionais;
-- intervalo nas linhas L16/L18/L20.
+- placas PARE funcionais (reservar enum, não bloquear);
+- UI de qualquer tipo.
 
 ---
 
@@ -133,15 +88,19 @@ npm run build
 ```
 
 Cobrir:
-- `getExitNode` para ambas as direções de um segmento;
-- `getActiveSwitchConnection` para posição A e B;
-- `getSegmentsAtNode` para nó com um, dois e três segmentos.
+- composição chegando pela ponta comum → segue pelo ramo ativo;
+- composição chegando pelo ramo ativo → sai pela ponta comum;
+- composição chegando pelo ramo inativo → chave contra bloqueada;
+- segmento protegido sem intervalo → bloqueado;
+- segmento protegido com intervalo → permitido;
+- terminal de linha → bloqueado com reason 'terminal'.
 
 ---
 
 ## Referências
 
-- `docs/MAPA_BRISAMAR_V1_CONSOLIDADO.md`
-- `docs/MODELO_DOMINIO.md` seções 2 e 3
-- `app/src/types/switch.ts`
+- `docs/MAPA_BRISAMAR_V1_CONSOLIDADO.md` — seção 4 (regras AMV, chave contra)
+- `docs/MODELO_DOMINIO.md` — seções 20, 23 e 24
+- `app/src/yard/data/brisamarTopology.ts`
+- `app/src/yard/data/brisamarTopologyGraph.ts`
 - `app/src/yard/data/brisamarSwitches.ts`
