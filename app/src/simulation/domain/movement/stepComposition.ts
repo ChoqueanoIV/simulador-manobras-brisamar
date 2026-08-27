@@ -5,6 +5,10 @@ import type {
 } from '../../../types/switch';
 import type { TrackSegment } from '../../../yard/data/brisamarTopology';
 import { getActiveSwitchConnection } from '../../../yard/data/brisamarTopologyGraph';
+import {
+  isSegmentOccupiedByOtherComposition,
+  type PositionedComposition,
+} from '../collision/collisionRules';
 import type { Composition } from '../composition/composition';
 import { hasLocomotive } from '../composition/composition';
 import type { NavigationBlockReason } from '../navigation/navigationEngine';
@@ -19,7 +23,8 @@ export type MovementDirection = 'head' | 'tail';
 
 export type MovementBlockReason =
   | NavigationBlockReason
-  | 'no-locomotive';
+  | 'no-locomotive'
+  | 'collision';
 
 export type StepCompositionResult =
   | {
@@ -56,15 +61,6 @@ function findSwitchAtNode(
   return null;
 }
 
-/**
- * Descobre por qual nó a composição entra no segmento retornado pelo
- * navigationEngine.
- *
- * O navigationEngine atravessa logicamente o AMV antes de escolher o próximo
- * segmento, mas seu contrato público retorna apenas o segmento selecionado.
- * Aqui apenas recuperamos esse nó de entrada a partir da mesma conexão ativa
- * já descrita por SwitchDefinition + SwitchState.
- */
 function resolveEntryNodeId(
   nextSegment: TrackSegment,
   exitNodeId: string,
@@ -123,13 +119,14 @@ function resolveEntryNodeId(
 /**
  * Executa um único passo lógico de uma composição entre segmentos do grafo.
  *
- * Esta função não altera UI, SVG, store, ocupação ou colisão.
+ * Esta função não altera UI, SVG, store ou ocupação de AMV.
  *
  * Fluxo:
  * 1. composição precisa possuir locomotiva;
  * 2. se o movimento for pela cauda, a direção lógica é invertida;
  * 3. navigationEngine resolve o próximo segmento ou bloqueio;
- * 4. a posição é avançada para o novo segmento.
+ * 4. verifica se outra composição já ocupa o segmento de destino;
+ * 5. a posição é avançada para o novo segmento.
  */
 export function stepComposition(
   composition: Composition,
@@ -139,6 +136,7 @@ export function stepComposition(
   switchDefs: Record<string, SwitchDefinition>,
   switchStates: SwitchState[],
   interval: IntervalState,
+  positionedCompositions: PositionedComposition[] = [],
 ): StepCompositionResult {
   if (!hasLocomotive(composition)) {
     return {
@@ -163,6 +161,19 @@ export function stepComposition(
 
   if (!navigation.ok) {
     return navigation;
+  }
+
+  if (
+    isSegmentOccupiedByOtherComposition(
+      navigation.segment.id,
+      composition.id,
+      positionedCompositions,
+    )
+  ) {
+    return {
+      ok: false,
+      reason: 'collision',
+    };
   }
 
   const entryNodeId = resolveEntryNodeId(

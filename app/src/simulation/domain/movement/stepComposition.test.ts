@@ -6,6 +6,7 @@ import type {
   SwitchState,
 } from '../../../types/switch';
 import type { TrackSegment } from '../../../yard/data/brisamarTopology';
+import type { PositionedComposition } from '../collision/collisionRules';
 import type { Composition } from '../composition/composition';
 import { createPosition } from '../position/compositionPosition';
 import { stepComposition } from './stepComposition';
@@ -318,6 +319,99 @@ describe('stepComposition', () => {
     expect(result).toEqual({
       ok: false,
       reason: 'switch-against',
+    });
+  });
+
+  it('bloqueia movimento quando outra composição ocupa o segmento de destino', () => {
+    const position = createPosition(linearSegments[0], 'NODE-B');
+
+    const positionedCompositions: PositionedComposition[] = [
+      {
+        compositionId: 'COMP-2',
+        position: createPosition(linearSegments[1], 'NODE-C'),
+      },
+    ];
+
+    const result = stepComposition(
+      compositionWithLocomotive(),
+      position,
+      'head',
+      linearSegments,
+      {},
+      [],
+      'not-granted',
+      positionedCompositions,
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'collision',
+    });
+  });
+
+  it('ignora a própria composição na verificação de colisão', () => {
+    const position = createPosition(linearSegments[0], 'NODE-B');
+
+    const positionedCompositions: PositionedComposition[] = [
+      {
+        compositionId: 'COMP-1',
+        position: createPosition(linearSegments[1], 'NODE-C'),
+      },
+    ];
+
+    const result = stepComposition(
+      compositionWithLocomotive(),
+      position,
+      'head',
+      linearSegments,
+      {},
+      [],
+      'not-granted',
+      positionedCompositions,
+    );
+
+    expect(result).toEqual({
+      ok: true,
+      nextPosition: {
+        segmentId: 'SEG-B-C',
+        headNodeId: 'NODE-C',
+        tailNodeId: 'NODE-B',
+      },
+    });
+  });
+
+  it('permite movimento quando outras composições estão em segmentos diferentes do destino', () => {
+    const position = createPosition(linearSegments[0], 'NODE-B');
+
+    const positionedCompositions: PositionedComposition[] = [
+      {
+        compositionId: 'COMP-2',
+        position: {
+          segmentId: 'SEG-OUTRO',
+          headNodeId: 'NODE-X',
+          tailNodeId: 'NODE-Y',
+        },
+      },
+    ];
+
+    const result = stepComposition(
+      compositionWithLocomotive(),
+      position,
+      'head',
+      linearSegments,
+      {},
+      [],
+      'not-granted',
+      positionedCompositions,
+    );
+
+    expect(result).toEqual({
+      ok: true,
+      nextPosition: {
+        segmentId: 'SEG-B-C',
+        headNodeId: 'NODE-C',
+        tailNodeId: 'NODE-B',
+      },
     });
   });
 });
