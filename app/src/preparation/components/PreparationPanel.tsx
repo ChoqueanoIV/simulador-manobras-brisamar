@@ -14,14 +14,59 @@ type PreparationPanelProps = {
   selectedSectionId: YardSectionId | null;
 };
 
+function StationNotesField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (notes: string) => void;
+}) {
+  return (
+    <div className="preparation-form">
+      <h4>Anotação da estação</h4>
+      <label>
+        Passagem de serviço / observações
+        <textarea
+          className="station-notes-input"
+          rows={4}
+          placeholder="Ex.: KSV — separar 10 FVR, 5 bobinas e 8 contêineres."
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+    </div>
+  );
+}
+
+function StartSimulationButton({
+  onStart,
+}: {
+  onStart: () => void;
+}) {
+  return (
+    <div className="start-simulation-area">
+      <button
+        type="button"
+        className="start-simulation-button"
+        onClick={onStart}
+      >
+        Iniciar Simulação →
+      </button>
+    </div>
+  );
+}
+
 export function PreparationPanel({
   selectedSectionId,
 }: PreparationPanelProps) {
   const mode = useSimulationStore((state) => state.mode);
   const yardSections = useSimulationStore((state) => state.yardSections);
+  const stationNotes = useSimulationStore((state) => state.stationNotes);
+  const setStationNotes = useSimulationStore((state) => state.setStationNotes);
   const addLocomotive = useSimulationStore((state) => state.addLocomotive);
   const addWagonBlock = useSimulationStore((state) => state.addWagonBlock);
   const resetYardSection = useSimulationStore((state) => state.resetYardSection);
+  const startSimulation = useSimulationStore((state) => state.startSimulation);
 
   const [locomotiveNumber, setLocomotiveNumber] = useState('');
   const [orientation, setOrientation] =
@@ -39,24 +84,49 @@ export function PreparationPanel({
     [selectedSectionId, yardSections],
   );
 
+  function handleStartSimulation() {
+    const confirmed = window.confirm(
+      'Iniciar simulação?\n\n' +
+        'Após iniciar, o preenchimento do pátio não poderá ser alterado diretamente.\n' +
+        'Qualquer mudança deverá ocorrer por manobra.',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    startSimulation();
+  }
+
+  /* ── Modo simulação ─────────────────────────────────────── */
   if (mode !== 'preparation') {
     return (
       <aside className="preparation-panel">
         <h3>Simulação iniciada</h3>
         <p>O preenchimento direto do pátio está encerrado.</p>
+        {stationNotes ? (
+          <div className="station-notes-readonly">
+            <span className="preparation-kicker">Anotação da estação</span>
+            <p className="station-notes-text">{stationNotes}</p>
+          </div>
+        ) : null}
       </aside>
     );
   }
 
+  /* ── Nenhum trecho selecionado ──────────────────────────── */
   if (!selectedSectionId || !section) {
     return (
       <aside className="preparation-panel">
         <h3>Modo preparação</h3>
         <p>Clique em um trecho válido do pátio para começar o preenchimento.</p>
+        <StationNotesField value={stationNotes} onChange={setStationNotes} />
+        <StartSimulationButton onStart={handleStartSimulation} />
       </aside>
     );
   }
 
+  /* ── Trecho selecionado ─────────────────────────────────── */
   const activeSectionId = selectedSectionId;
   const activeSection = section;
   const definition = yardSectionDefinitions[activeSectionId];
@@ -225,6 +295,8 @@ export function PreparationPanel({
         )}
       </div>
 
+      <StationNotesField value={stationNotes} onChange={setStationNotes} />
+
       {activeSection.rollingStock.length ? (
         <button
           className="preparation-reset-button"
@@ -234,6 +306,8 @@ export function PreparationPanel({
           Resetar trecho
         </button>
       ) : null}
+
+      <StartSimulationButton onStart={handleStartSimulation} />
     </aside>
   );
 }

@@ -3,11 +3,20 @@ import './App.css';
 import { IntervalControls } from './components/controls/IntervalControls';
 import { PreparationPanel } from './preparation/components/PreparationPanel';
 import type { YardSectionId } from './preparation/types/preparation';
+import { useSimulationStore } from './state/simulationStore';
 import { YardCanvas } from './yard/components/YardCanvas';
 
 function App() {
   const [selectedSectionId, setSelectedSectionId] =
     useState<YardSectionId | null>(null);
+
+  const mode = useSimulationStore((state) => state.mode);
+  const isSimulation = mode === 'simulation';
+
+  const modeLabel = isSimulation ? 'Modo simulação' : 'Modo preparação';
+  const workspaceHint = isSimulation
+    ? 'Use a roda do mouse para zoom e arraste uma área vazia para navegar.'
+    : 'Use a roda do mouse para zoom, arraste uma área vazia para navegar e clique em um trecho para preenchê-lo.';
 
   return (
     <main className="app-shell">
@@ -17,7 +26,9 @@ function App() {
           <h1>Pátio Brisamar</h1>
         </div>
 
-        <div className="status-pill">Modo preparação</div>
+        <div className={`status-pill${isSimulation ? ' status-pill--simulation' : ''}`}>
+          {modeLabel}
+        </div>
       </header>
 
       <section className="notice">
@@ -29,10 +40,7 @@ function App() {
         <div className="workspace-header">
           <div>
             <h2>Mapa do pátio</h2>
-            <p>
-              Use a roda do mouse para zoom, arraste uma área vazia para navegar
-              e clique em um trecho para preenchê-lo.
-            </p>
+            <p>{workspaceHint}</p>
           </div>
 
           <IntervalControls />

@@ -80,6 +80,12 @@ h1 {
   font-weight: 700;
 }
 
+.status-pill--simulation {
+  border-color: #9dcaaa;
+  background: #f0fbf3;
+  color: #1a5c2e;
+}
+
 .notice {
   max-width: 1800px;
   margin: 0 auto 18px;
@@ -619,4 +625,59 @@ h1 {
   fill: #172033;
   font-size: 8px;
   font-weight: 850;
+}
+
+/* Anotação da estação */
+.station-notes-input {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid #c7d3e1;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #26364b;
+  resize: vertical;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.station-notes-readonly {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid #d7e0eb;
+  border-radius: 9px;
+  background: #f0f4f9;
+}
+
+.station-notes-text {
+  margin: 6px 0 0;
+  color: #26364b;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Botão Iniciar Simulação */
+.start-simulation-area {
+  padding: 16px 0 4px;
+  border-top: 1px solid #dde5ee;
+  margin-top: 8px;
+}
+
+.start-simulation-button {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #1b6bb8;
+  border-radius: 10px;
+  background: #1b6bb8;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.start-simulation-button:hover {
+  background: #155fa5;
+  border-color: #155fa5;
 }

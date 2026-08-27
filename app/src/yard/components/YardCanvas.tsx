@@ -340,7 +340,9 @@ export function YardCanvas({
           ))}
 
           <text x="800" y="675" className="canvas-caption">
-            Modo preparação — clique em um trecho para cadastrar o material inicial.
+            {mode === 'preparation'
+              ? 'Modo preparação — clique em um trecho para cadastrar o material inicial.'
+              : 'Modo simulação — operar AMVs, solicitar intervalo e realizar manobras.'}
           </text>
         </g>
       </svg>
