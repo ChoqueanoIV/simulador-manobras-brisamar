@@ -92,7 +92,7 @@ describe('resolveNextSegment — terminal', () => {
     expect(result).toEqual({ ok: false, reason: 'terminal' });
   });
 
-  it('retorna terminal no terminal esquerdo de L28', () => {
+  it('bloqueia na placa PARE esquerda de L28 sem intervalo', () => {
     const result = resolveNextSegment(
       'SEG-L28',
       'N-L28-TERM',
@@ -103,7 +103,7 @@ describe('resolveNextSegment — terminal', () => {
       ),
       'not-granted',
     );
-    expect(result).toEqual({ ok: false, reason: 'terminal' });
+    expect(result).toEqual({ ok: false, reason: 'stop-board' });
   });
 });
 

@@ -291,6 +291,11 @@ Representa a posição física da composição no grafo.
 
 O modelo definitivo será fechado durante a implementação do movimento.
 
+Decisão validada em 2026-10-26: na futura integração da preparação, o
+praticante escolherá no mapa a extremidade inicial do movimento. Não inferir
+essa escolha da orientação frente/ré barra de uma locomotiva, nem engatar
+automaticamente os materiais cadastrados na mesma seção.
+
 Conceitualmente deverá permitir:
 
 - saber em qual segmento está a frente;
@@ -350,6 +355,29 @@ type SimulationState = {
 ---
 
 ## 18. Preparation Mode
+
+### Engates iniciais — decisão validada em 2026-10-26
+
+O praticante marca explicitamente os engates entre materiais vizinhos durante
+o preenchimento, antes de iniciar a simulação. A ordem de cadastro e o contato
+visual não criam engate. O controle desta primeira fatia liga/desliga a conexão
+entre dois itens consecutivos (locomotiva ou bloco) de uma mesma seção.
+Os blocos mantêm sua identidade, descrição e cor, mesmo quando conectados.
+Limpar uma seção remove também suas marcações; adicionar material não cria
+novos engates. Depois de iniciar, essas marcações não podem ser editadas pela
+preparação: futuras mudanças deverão ocorrer pelas operações de manobra.
+
+Essa marcação não atribui posição no grafo, não movimenta material e não
+transforma a seção inteira em uma composição automaticamente.
+
+### Conversão dos grupos preparados
+
+Ao iniciar, cada cadeia de itens ligada pelos engates marcados forma uma
+composição. Uma locomotiva isolada ou bloco sem ligação a outro item forma seu
+próprio grupo. Cada bloco fornece suas unidades individuais, preservando
+`sourceBlockId`, identificação, cor e ordem; blocos iguais não se fundem.
+A conversão não escolhe frente, posição no trilho ou comprimento em metros.
+As composições resultantes permanecem sem posição até a integração espacial.
 
 Permite edição direta.
 

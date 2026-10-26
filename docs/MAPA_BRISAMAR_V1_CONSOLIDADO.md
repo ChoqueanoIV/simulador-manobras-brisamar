@@ -122,6 +122,22 @@ As placas PARE só podem ser ultrapassadas com intervalo concedido.
 - Intervalo: não obrigatório
 - Regra de ocupação: não pode ser manipulado com locomotiva ou vagão sobre o AMV
 
+#### Esclarecimento validado em 2026-10-26
+
+Vindo da curva à direita, a ponta comum do AMV-12 é o lado da curva.
+Em A, segue pela L22 em direção ao AMV-10; em B, entra na L24 pelo lado
+direito e segue o trecho reto até o AMV-11, o próximo AMV em direção ao meio
+do pátio no SVG aprovado. No AMV-11 segue a conexão alinhada: A mantém L24
+rumo ao AMV-04; B leva ao desvio para o AMV-10/L22.
+
+O grafo anterior ligava incorretamente AMV-12 diretamente a AMV-03/L30 e
+representava uma continuação extra de L22 após AMV-12. Essas conexões não
+representam o desenho aprovado nem a sequência esclarecida pelo responsável.
+O trecho L24 inferior liga AMV-11 a AMV-12 (incluindo a aproximação diagonal);
+o trecho L22 entre AMV-10 e AMV-12 chega ao ramo A do AMV-12.
+Não confundir a L24, desenhada acima de L22, com a seção `L24_SUPERIOR`
+localizada à esquerda do pátio.
+
 ---
 
 ## 4. Regras gerais de AMV
@@ -197,6 +213,23 @@ Ao entregar o intervalo:
 
 ## 6. Continuação técnica das L16, L18 e L20
 
+### Sequência da diagonal validada em 2026-10-26
+
+O responsável confirmou o caminho L22 → AMV-09 → AMV-08 → AMV-07 → AMV-06,
+conforme o destino escolhido. Intervalo concedido pelo CCO autoriza acesso,
+mas não alinha automaticamente as chaves:
+
+- AMV-09 em B acessa a diagonal; em A mantém circulação L22 ↔ L22.
+- Chegando do AMV-09, AMV-08 em A entra em L20; em B continua até AMV-07.
+- Chegando do AMV-08, AMV-07 em A entra em L18; em B continua até AMV-06.
+- AMV-06 mantém o comportamento fixo já aprovado na interface, levando à L16.
+- No retorno, é necessário alinhamento favorável em cada AMV atravessado.
+
+No grafo, cada ponta pertence a somente um AMV; os trechos entre AMVs ligam
+essas pontas distintas. Não compartilhar a ponta de um AMV como ramo de outro,
+nem ligar o trecho de aproximação diretamente ao ramo da linha de destino.
+Continuam valendo intervalo, chave contra, colisão e ocupação por adjacência.
+
 As linhas L16, L18 e L20 possuem continuidade reta além da área representada como área de manobra.
 
 Esses trechos:
@@ -241,6 +274,20 @@ Excedentes devem gerar apenas alerta visual, sem bloquear a simulação.
 - sem intervalo: não podem ser ultrapassadas;
 - com intervalo: podem ser ultrapassadas;
 - o movimento deve ser bloqueado no limite da placa enquanto não houver intervalo.
+
+### Validação do responsável pelo domínio — 2026-10-26
+
+As nove pontas com placa no SVG (L30, L28, L26, L24 superior, L22 superior,
+L20, L18, L16 e topo da alça curva) têm continuidade de via além da placa.
+O acesso depende do intervalo concedido pelo CCO, solicitado via rádio na
+operação real, usando no simulador o mesmo controle de intervalo já existente.
+Não criar uma segunda autorização nem simular comunicação por rádio.
+
+Na representação discreta, cada placa liga o trecho interno a um trecho lógico
+externo protegido por intervalo. Não foram definidas distâncias, capacidades
+ou conexões posteriores. A ponta externa é somente o limite do grafo modelado,
+não uma afirmação de fim físico da via. Os antigos IDs `TERM` junto às placas
+são preservados por compatibilidade, mas passam a representar o limite PARE.
 
 ---
 

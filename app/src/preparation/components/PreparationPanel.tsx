@@ -9,6 +9,7 @@ import { yardSectionDefinitions } from '../data/yardSections';
 import type { YardSectionId } from '../types/preparation';
 import { useSimulationStore } from '../../state/simulationStore';
 import type { LocomotiveOrientation } from '../../rolling-stock/types/rollingStock';
+import { PreparationCouplings } from './PreparationCouplings';
 
 type PreparationPanelProps = {
   selectedSectionId: YardSectionId | null;
@@ -61,6 +62,7 @@ export function PreparationPanel({
 }: PreparationPanelProps) {
   const mode = useSimulationStore((state) => state.mode);
   const yardSections = useSimulationStore((state) => state.yardSections);
+  const compositionCount = useSimulationStore((state) => state.compositions.length);
   const stationNotes = useSimulationStore((state) => state.stationNotes);
   const setStationNotes = useSimulationStore((state) => state.setStationNotes);
   const addLocomotive = useSimulationStore((state) => state.addLocomotive);
@@ -104,6 +106,13 @@ export function PreparationPanel({
       <aside className="preparation-panel">
         <h3>Simulação iniciada</h3>
         <p>O preenchimento direto do pátio está encerrado.</p>
+        <p>Composições iniciais: {compositionCount}</p>
+        {yardSections.filter((item) => item.rollingStock.length > 1).map((item) => (
+          <section key={item.sectionId} className="initial-couplings-summary">
+            <h4>{yardSectionDefinitions[item.sectionId].label} — engates iniciais</h4>
+            <PreparationCouplings section={item} readOnly />
+          </section>
+        ))}
         {stationNotes ? (
           <div className="station-notes-readonly">
             <span className="preparation-kicker">Anotação da estação</span>
@@ -294,6 +303,8 @@ export function PreparationPanel({
           <p>Trecho vazio.</p>
         )}
       </div>
+
+      <PreparationCouplings section={activeSection} />
 
       <StationNotesField value={stationNotes} onChange={setStationNotes} />
 

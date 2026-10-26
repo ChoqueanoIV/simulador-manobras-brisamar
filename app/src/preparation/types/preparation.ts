@@ -22,6 +22,12 @@ export type YardSectionState = {
   rollingStock: RollingStock[];
 };
 
+export type PreparationCoupling = {
+  sectionId: YardSectionId;
+  leftRollingStockId: string;
+  rightRollingStockId: string;
+};
+
 export type YardSectionDefinition = {
   id: YardSectionId;
   label: string;

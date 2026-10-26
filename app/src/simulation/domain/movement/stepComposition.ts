@@ -17,6 +17,7 @@ import type { CompositionPosition } from '../position/compositionPosition';
 import {
   advanceToSegment,
   flipDirection,
+  isValidPosition,
 } from '../position/compositionPosition';
 
 export type MovementDirection = 'head' | 'tail';
@@ -24,6 +25,7 @@ export type MovementDirection = 'head' | 'tail';
 export type MovementBlockReason =
   | NavigationBlockReason
   | 'no-locomotive'
+  | 'invalid-position'
   | 'collision';
 
 export type StepCompositionResult =
@@ -143,6 +145,10 @@ export function stepComposition(
       ok: false,
       reason: 'no-locomotive',
     };
+  }
+
+  if (!isValidPosition(position, segments)) {
+    return { ok: false, reason: 'invalid-position' };
   }
 
   const movementPosition =

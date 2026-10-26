@@ -12,16 +12,17 @@ import { getSegmentsAtNode } from '../../../yard/data/brisamarTopologyGraph';
 export type NavigationBlockReason =
   /** Extremidade de linha — não há próximo segmento. */
   | 'terminal'
+  /** Dados insuficientes ou mais de uma rota candidata sem resolução. */
+  | 'invalid-topology'
   /** Chave contra — o AMV bloqueia a passagem nessa direção. */
   | 'switch-against'
   /** Segmento protegido por intervalo não concedido. */
   | 'interval-required'
-  /** Placa PARE — reservado para implementação futura. */
+  /** Travessia de placa PARE sem intervalo. */
   | 'stop-board';
 
 export type NavigationResult =
-  | { ok: true; segment: TrackSegment }
-  | { ok: false; reason: NavigationBlockReason };
+  { ok: true; segment: TrackSegment } | { ok: false; reason: NavigationBlockReason };
 
 /* ── isSwitchAgainst ────────────────────────────────────── */
 
@@ -79,11 +80,7 @@ function findSwitchAtNode(
   switchStates: SwitchState[],
 ): { def: SwitchDefinition; state: SwitchState } | null {
   for (const def of Object.values(switchDefs)) {
-    if (
-      def.nodeCommon === nodeId ||
-      def.nodeA === nodeId ||
-      def.nodeB === nodeId
-    ) {
+    if (def.nodeCommon === nodeId || def.nodeA === nodeId || def.nodeB === nodeId) {
       const state = switchStates.find((s) => s.id === def.id);
 
       if (state) {
@@ -130,6 +127,29 @@ export function resolveNextSegment(
   switchStates: SwitchState[],
   interval: IntervalState,
 ): NavigationResult {
+  const current = segments.filter((segment) => segment.id === currentSegmentId);
+  if (
+    current.length !== 1 ||
+    (current[0].startNodeId !== exitNodeId && current[0].endNodeId !== exitNodeId)
+  ) {
+    return { ok: false, reason: 'invalid-topology' };
+  }
+  if (interval !== 'granted' && current[0].stopBoardNodeId === exitNodeId) {
+    return { ok: false, reason: 'stop-board' };
+  }
+  if (interval !== 'granted' && current[0].protectedByInterval) {
+    return { ok: false, reason: 'interval-required' };
+  }
+  const definitionsAtNode = Object.values(switchDefs).filter((def) =>
+    [def.nodeCommon, def.nodeA, def.nodeB].includes(exitNodeId),
+  );
+  if (
+    definitionsAtNode.length > 1 ||
+    (definitionsAtNode.length === 1 &&
+      switchStates.filter((state) => state.id === definitionsAtNode[0].id).length !== 1)
+  ) {
+    return { ok: false, reason: 'invalid-topology' };
+  }
   const switchAtNode = findSwitchAtNode(exitNodeId, switchDefs, switchStates);
 
   // ── Atravessando um AMV ────────────────────────────────
@@ -157,6 +177,10 @@ export function resolveNextSegment(
       (seg) => seg.id !== currentSegmentId,
     );
 
+    if (candidates.filter((segment) => !segment.technical).length > 1) {
+      return { ok: false, reason: 'invalid-topology' };
+    }
+
     if (candidates.length === 0) {
       return { ok: false, reason: 'terminal' };
     }
@@ -180,6 +204,10 @@ export function resolveNextSegment(
   const candidates = getSegmentsAtNode(exitNodeId, segments).filter(
     (seg) => seg.id !== currentSegmentId,
   );
+
+  if (candidates.filter((segment) => !segment.technical).length > 1) {
+    return { ok: false, reason: 'invalid-topology' };
+  }
 
   if (candidates.length === 0) {
     return { ok: false, reason: 'terminal' };

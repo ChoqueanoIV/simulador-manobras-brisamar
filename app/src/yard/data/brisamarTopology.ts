@@ -17,6 +17,8 @@
  * Segmentos são bidirecionais — a direção no tipo é apenas convenção.
  */
 
+import { brisamarStopBoards } from './brisamarStopBoards';
+
 export type TrackNode = {
   id: string;
 };
@@ -38,6 +40,8 @@ export type TrackSegment = {
    * Não é área livre de manobra do praticante.
    */
   technical: boolean;
+  /** Limite PARE em uma extremidade deste segmento. */
+  stopBoardNodeId?: string;
 };
 
 /* ── Nós ──────────────────────────────────────────────────── */
@@ -69,10 +73,9 @@ export const brisamarNodes: TrackNode[] = [
   { id: 'N-AMV04-C' },        // ponta comum do AMV-04
   { id: 'N-AMV04-A' },        // ramo A do AMV-04 (L24 reta)
   { id: 'N-AMV04-B' },        // ramo B do AMV-04 (L24↔L22)
-  { id: 'N-AMV11-C' },        // ponta comum do AMV-11
-  { id: 'N-AMV11-A' },        // ramo A do AMV-11 (L24 reta)
+  { id: 'N-AMV11-C' },        // ponta comum do AMV-11, lado direito/AMV-12
+  { id: 'N-AMV11-A' },        // ramo A do AMV-11, L24 rumo ao AMV-04
   { id: 'N-AMV11-B' },        // ramo B do AMV-11 (L24↔L22)
-  { id: 'N-L24-TERM-DIR' },   // terminal direito de L24
 
   // ── L22 ────────────────────────────────────────────────
   { id: 'N-L22-TERM-ESQ' },   // terminal esquerdo de L22
@@ -85,10 +88,9 @@ export const brisamarNodes: TrackNode[] = [
   { id: 'N-AMV10-C' },        // ponta comum do AMV-10
   { id: 'N-AMV10-A' },        // ramo A do AMV-10 (L22 reta)
   { id: 'N-AMV10-B' },        // ramo B do AMV-10 (L22↔L24 inf.)
-  { id: 'N-AMV12-C' },        // ponta comum do AMV-12
-  { id: 'N-AMV12-A' },        // ramo A do AMV-12 (L22 reta)
-  { id: 'N-AMV12-B' },        // ramo B do AMV-12 (L22↔L24 sup.)
-  { id: 'N-L22-TERM-DIR' },   // terminal direito de L22 (inferior)
+  { id: 'N-AMV12-C' },        // ponta comum do AMV-12, lado da curva
+  { id: 'N-AMV12-A' },        // ramo A do AMV-12, L22 rumo ao AMV-10
+  { id: 'N-AMV12-B' },        // ramo B do AMV-12, L24 rumo ao AMV-11
   { id: 'N-L22-CURVA-TERM' }, // terminal da alça curva (topo)
 
   // ── L20 ────────────────────────────────────────────────
@@ -100,23 +102,25 @@ export const brisamarNodes: TrackNode[] = [
   { id: 'N-L18-TERM-ESQ' },   // terminal esquerdo de L18
   { id: 'N-AMV07-B' },        // ramo B do AMV-07 (diagonal → L18)
   { id: 'N-AMV07-TEC' },      // ramo técnico do AMV-07 (L18 reta, fora de manobra)
+  { id: 'N-AMV07-D' },        // ramo diagonal do AMV-07, em direção ao AMV-06
 
   // ── L16 ────────────────────────────────────────────────
   { id: 'N-L16-TERM-ESQ' },   // terminal esquerdo de L16
   { id: 'N-AMV06-B' },        // ramo B do AMV-06 (diagonal → L16)
   { id: 'N-AMV06-TEC' },      // ramo técnico do AMV-06 (L16 reta, fora de manobra)
+  { id: 'N-AMV08-D' },        // ramo diagonal do AMV-08, em direção ao AMV-07
 
   // ── Diagonal de manobra (L16/L18/L20 → L22) ───────────
   // Os AMVs 06, 07 e 08 compartilham a diagonal de manobra.
   // O nó comum de cada um é o ponto onde a diagonal encontra a linha.
   { id: 'N-AMV06-C' },        // ponta comum do AMV-06
   { id: 'N-AMV07-C' },        // ponta comum do AMV-07
-  { id: 'N-AMV08-C' },        // ponta comum do AMV-08 (= N-AMV09-B na topologia real)
+  { id: 'N-AMV08-C' },        // ponta comum do AMV-08, vindo do AMV-09
+  ...brisamarStopBoards.map((board) => ({ id: `N-EXTERNO-${board.id}` })),
 ];
-
 /* ── Segmentos ────────────────────────────────────────────── */
 
-export const brisamarSegments: TrackSegment[] = [
+const internalSegments: TrackSegment[] = [
 
   // ── L30 ────────────────────────────────────────────────
   {
@@ -194,17 +198,17 @@ export const brisamarSegments: TrackSegment[] = [
     id: 'SEG-L24-TRAV',
     line: 'L24',
     startNodeId: 'N-AMV04-A',
-    endNodeId: 'N-AMV11-C',
+    endNodeId: 'N-AMV11-A',
     protectedByInterval: false,
     technical: false,
   },
 
-  // ── L24 Inferior (AMV-11 até terminal direito) ─────────
+  // ── L24 inferior: AMV-11 até o ramo L24 do AMV-12 ─────
   {
     id: 'SEG-L24-INF',
     line: 'L24',
-    startNodeId: 'N-AMV11-A',
-    endNodeId: 'N-L24-TERM-DIR',
+    startNodeId: 'N-AMV11-C',
+    endNodeId: 'N-AMV12-B',
     protectedByInterval: false,
     technical: false,
   },
@@ -244,26 +248,16 @@ export const brisamarSegments: TrackSegment[] = [
     id: 'SEG-L22-10-12',
     line: 'L22',
     startNodeId: 'N-AMV10-A',
-    endNodeId: 'N-AMV12-C',
+    endNodeId: 'N-AMV12-A',
     protectedByInterval: false,
     technical: false,
   },
 
-  // ── L22 Inferior (AMV-12 ramo A até terminal direito) ──
-  {
-    id: 'SEG-L22-INF',
-    line: 'L22',
-    startNodeId: 'N-AMV12-A',
-    endNodeId: 'N-L22-TERM-DIR',
-    protectedByInterval: false,
-    technical: false,
-  },
-
-  // ── L22 Alça curva (AMV-12 ramo B até topo) ────────────
+  // ── Alça curva: ponta comum do AMV-12 até a placa ─────
   {
     id: 'SEG-L22-CURVA',
     line: 'L22',
-    startNodeId: 'N-AMV12-B',
+    startNodeId: 'N-AMV12-C',
     endNodeId: 'N-L22-CURVA-TERM',
     protectedByInterval: false,
     technical: false,
@@ -285,16 +279,6 @@ export const brisamarSegments: TrackSegment[] = [
     line: 'L22',
     startNodeId: 'N-AMV11-B',
     endNodeId: 'N-AMV10-B',
-    protectedByInterval: false,
-    technical: false,
-  },
-
-  // ── Desvio AMV-12 → L24 Superior ───────────────────────
-  {
-    id: 'SEG-L22-L24-AMV12',
-    line: 'L24',
-    startNodeId: 'N-AMV12-B',
-    endNodeId: 'N-AMV03-B',
     protectedByInterval: false,
     technical: false,
   },
@@ -323,7 +307,7 @@ export const brisamarSegments: TrackSegment[] = [
   {
     id: 'SEG-DIAG-L20-AMV09',
     line: 'L20',
-    startNodeId: 'N-AMV08-B',
+    startNodeId: 'N-AMV08-C',
     endNodeId: 'N-AMV09-B',
     protectedByInterval: true,
     technical: false,
@@ -353,8 +337,8 @@ export const brisamarSegments: TrackSegment[] = [
   {
     id: 'SEG-DIAG-L18-AMV08',
     line: 'L18',
-    startNodeId: 'N-AMV07-B',
-    endNodeId: 'N-AMV08-C',
+    startNodeId: 'N-AMV07-C',
+    endNodeId: 'N-AMV08-D',
     protectedByInterval: true,
     technical: false,
   },
@@ -383,9 +367,26 @@ export const brisamarSegments: TrackSegment[] = [
   {
     id: 'SEG-DIAG-L16-AMV07',
     line: 'L16',
-    startNodeId: 'N-AMV06-B',
-    endNodeId: 'N-AMV07-C',
+    startNodeId: 'N-AMV06-C',
+    endNodeId: 'N-AMV07-D',
     protectedByInterval: true,
     technical: false,
   },
+];
+
+/** Continuação discreta além das placas; sem comprimento físico atribuído. */
+export const brisamarSegments: TrackSegment[] = [
+  ...internalSegments.map((segment) => {
+    const board = brisamarStopBoards.find((item) => item.segmentId === segment.id);
+    return board ? { ...segment, stopBoardNodeId: board.nodeId } : segment;
+  }),
+  ...brisamarStopBoards.map((board): TrackSegment => ({
+    id: `SEG-EXTERNO-${board.id}`,
+    line: board.line,
+    startNodeId: board.nodeId,
+    endNodeId: `N-EXTERNO-${board.id}`,
+    protectedByInterval: true,
+    technical: false,
+    stopBoardNodeId: board.nodeId,
+  })),
 ];

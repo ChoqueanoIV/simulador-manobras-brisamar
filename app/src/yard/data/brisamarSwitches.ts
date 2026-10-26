@@ -87,7 +87,7 @@ export const brisamarSwitchDefinitions: Record<SwitchId, SwitchDefinition> = {
 
   /**
    * AMV-07: conecta L18 ao ramal diagonal.
-   * Posição A: L18 reta (interno).
+   * Posição A: entrada em L18.
    * Posição B: desvio para L16 via AMV-06.
    * Requer intervalo.
    */
@@ -98,12 +98,12 @@ export const brisamarSwitchDefinitions: Record<SwitchId, SwitchDefinition> = {
     intervalRule: 'full-lock',
     nodeCommon: 'N-AMV07-C',
     nodeA: 'N-AMV07-B',
-    nodeB: 'N-AMV06-C',
+    nodeB: 'N-AMV07-D',
   },
 
   /**
    * AMV-08: conecta L20 ao ramal diagonal.
-   * Posição A: L20 reta (interno).
+   * Posição A: entrada em L20.
    * Posição B: desvio para L18 via AMV-07.
    * Requer intervalo.
    */
@@ -114,7 +114,7 @@ export const brisamarSwitchDefinitions: Record<SwitchId, SwitchDefinition> = {
     intervalRule: 'full-lock',
     nodeCommon: 'N-AMV08-C',
     nodeA: 'N-AMV08-B',
-    nodeB: 'N-AMV07-C',
+    nodeB: 'N-AMV08-D',
   },
 
   /**
@@ -147,7 +147,7 @@ export const brisamarSwitchDefinitions: Record<SwitchId, SwitchDefinition> = {
   },
 
   /**
-   * AMV-11: mantém L24 reta (posição A) ou desvia para L22 (posição B).
+   * AMV-11: vindo da L24 à direita (AMV-12), mantém L24 (A) ou desvia para L22 (B).
    */
   'AMV-11': {
     id: 'AMV-11',
@@ -160,9 +160,8 @@ export const brisamarSwitchDefinitions: Record<SwitchId, SwitchDefinition> = {
   },
 
   /**
-   * AMV-12: mantém L22 reta (posição A) ou desvia para a alça curva / L24 superior (posição B).
-   * A alça de curva é um ramo fixo do desenho — o AMV opera apenas entre
-   * a continuidade da L22 e o desvio para L24 superior.
+   * AMV-12: ponta comum na curva; A liga à L22/AMV-10, B à L24/AMV-11.
+   * Validado pelo responsável em 2026-10-26. Não há ligação direta a AMV-03/L30.
    */
   'AMV-12': {
     id: 'AMV-12',

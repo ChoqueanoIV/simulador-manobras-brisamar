@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { initialSwitchStates } from '../yard/data/brisamarSwitches';
 import type { PositionedComposition } from '../simulation/domain/collision/collisionRules';
 import { useSimulationStore } from './simulationStore';
+import { brisamarSegments } from '../yard/data/brisamarTopology';
+import { createPosition } from '../simulation/domain/position/compositionPosition';
 
 /**
  * Reseta o store antes de cada teste para garantir isolamento.
@@ -16,6 +18,9 @@ function resetStore() {
       ...switchState,
     })),
     positionedCompositions: [],
+    compositions: [],
+    compositionOrigins: [],
+    preparationCouplings: [],
     yardSections: useSimulationStore
       .getState()
       .yardSections.map((section) => ({
@@ -31,11 +36,10 @@ function positionedComposition(
 ): PositionedComposition {
   return {
     compositionId,
-    position: {
-      segmentId,
-      headNodeId: 'HEAD',
-      tailNodeId: 'TAIL',
-    },
+    position: createPosition(
+      brisamarSegments.find((segment) => segment.id === segmentId)!,
+      brisamarSegments.find((segment) => segment.id === segmentId)!.endNodeId,
+    ),
   };
 }
 

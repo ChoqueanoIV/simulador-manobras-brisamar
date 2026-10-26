@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TrackSegment } from './brisamarTopology';
 import { brisamarSegments } from './brisamarTopology';
 import { brisamarSwitchDefinitions } from './brisamarSwitches';
-import {
-  getActiveSwitchConnection,
-  getExitNode,
-  getSegmentsAtNode,
-} from './brisamarTopologyGraph';
+import { getActiveSwitchConnection, getExitNode, getSegmentsAtNode } from './brisamarTopologyGraph';
 
 /* ── getExitNode ────────────────────────────────────────── */
 
@@ -75,9 +71,9 @@ describe('getSegmentsAtNode', () => {
     expect(result).toHaveLength(0);
   });
 
-  it('retorna exatamente um segmento para nó terminal de L30', () => {
+  it('conecta trecho interno e continuação no limite PARE de L30', () => {
     const result = getSegmentsAtNode('N-L30-TERM', brisamarSegments);
-    expect(result).toHaveLength(1);
+    expect(result).toHaveLength(2);
     expect(result[0].id).toBe('SEG-L30');
   });
 
@@ -169,14 +165,15 @@ describe('integridade da topologia brisamar', () => {
     }
   });
 
-  it('segmentos de L22/L24/L26/L28/L30 não são protectedByInterval', () => {
+  it('trechos internos de L22/L24/L26/L28/L30 não são protectedByInterval', () => {
     const notProtected = brisamarSegments.filter(
       (s) =>
-        s.line === 'L22' ||
-        s.line === 'L24' ||
-        s.line === 'L26' ||
-        s.line === 'L28' ||
-        s.line === 'L30',
+        !s.id.startsWith('SEG-EXTERNO-') &&
+        (s.line === 'L22' ||
+          s.line === 'L24' ||
+          s.line === 'L26' ||
+          s.line === 'L28' ||
+          s.line === 'L30'),
     );
     for (const seg of notProtected) {
       expect(seg.protectedByInterval).toBe(false);
